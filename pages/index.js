@@ -1,24 +1,34 @@
-const DUMMY_DATA = [
-  {
-    id: 1,
-    answer: "1st answer",
-  },
-  {
-    id: 2,
-    answer: "2nd answer",
-  },
-];
+import React, { useState, useEffect } from "react";
 
 function HomePage() {
+  let [logData, setLogData] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await fetch(
+        "https://nfield-log-default-rtdb.firebaseio.com/answerLog.json"
+      );
+      const data = await response.json();
+      const transformedData = [];
+      for (const key in data) {
+        transformedData.push({
+          id: key,
+          answer: data[key],
+        });
+      }
+      setLogData(transformedData);
+    };
+    fetchData();
+  }, []);
   return (
     <div>
-      <h1>POC</h1>
+      <h1>Nfield Logger</h1>
       <div>
-        <p>
-          {DUMMY_DATA.map((answer) => (
-            <li key={answer.id}>{answer.answer}</li>
+        <ul>
+          {logData.map((log) => (
+            <li key={log.id}>{log.answer}</li>
           ))}
-        </p>
+        </ul>
       </div>
     </div>
   );
