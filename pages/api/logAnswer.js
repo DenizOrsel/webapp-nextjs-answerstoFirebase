@@ -8,7 +8,7 @@ function handler(req, res) {
         headers: {
             "Content-Type": "application/json"
         }
-    });
+    }).then(Promise.resolve());
 
 
 console.log("Hey I intercepted a request!" + req.query.answer);
