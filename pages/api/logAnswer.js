@@ -1,7 +1,6 @@
-import next from "next";
 
-function handler(req, res) {
-      fetch("https://nfield-log-default-rtdb.firebaseio.com/answerLog.json"
+async function handler(req, res) {
+      await fetch("https://nfield-log-default-rtdb.firebaseio.com/answerLog.json"
     , {
         method: "POST",
         body: JSON.stringify(req.query.answer),
