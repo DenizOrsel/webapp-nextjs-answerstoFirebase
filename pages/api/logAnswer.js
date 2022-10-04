@@ -18,3 +18,5 @@ console.log("Hey I intercepted a request!" + req.query.answer);
 }
 
 export default handler;
+
+// Language: javascript
