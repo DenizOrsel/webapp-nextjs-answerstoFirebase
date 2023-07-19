@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import firebase from "firebase/app";
 import "firebase/database";
+import Chart from "chart.js/auto"; // Import Chart.js
 
 // Your Firebase configuration
 const firebaseConfig = {
   // Your Firebase config values (apiKey, authDomain, projectId, etc.)
-  projectId: "nfield-log",
+  projectId:"nfield-log",
 };
 
 // Initialize Firebase
@@ -14,7 +15,11 @@ if (!firebase.apps.length) {
 }
 
 function HomePage() {
-  let [logData, setLogData] = useState([]);
+  const [logData, setLogData] = useState([]);
+  const [chartData, setChartData] = useState({});
+
+  // Ref to keep track of the chart instance
+  const chartRef = useRef(null);
 
   useEffect(() => {
     // Create a reference to your Firebase Realtime Database
@@ -24,11 +29,37 @@ function HomePage() {
     const handleDataChange = (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const transformedData = Object.entries(data).map(([id, answer]) => ({
-          id,
-          answer,
-        }));
-        setLogData(transformedData);
+        // Aggregate the data
+        const aggregatedData = {};
+        for (const key in data) {
+          const answer = data[key];
+          if (aggregatedData[answer]) {
+            aggregatedData[answer]++;
+          } else {
+            aggregatedData[answer] = 1;
+          }
+        }
+
+        // Convert the aggregated data to Chart.js format
+        const labels = Object.keys(aggregatedData);
+        const values = Object.values(aggregatedData);
+
+        // Update the state with aggregated data
+        setLogData(
+          labels.map((label, index) => ({ id: index, answer: label }))
+        );
+        setChartData({
+          labels,
+          datasets: [
+            {
+              label: "Answers",
+              data: values,
+              backgroundColor: "rgba(75, 192, 192, 0.2)",
+              borderColor: "rgba(75, 192, 192, 1)",
+              borderWidth: 1,
+            },
+          ],
+        });
       }
     };
 
@@ -39,15 +70,37 @@ function HomePage() {
     return () => databaseRef.off("value", handleDataChange);
   }, []);
 
+  // Use Chart.js to create a bar chart
+  useEffect(() => {
+    if (chartData.labels && chartData.labels.length > 0) {
+      // If a previous chart instance exists, destroy it before creating a new one
+      if (chartRef.current) {
+        chartRef.current.destroy();
+      }
+
+      const ctx = document.getElementById("barChart").getContext("2d");
+      const newChart = new Chart(ctx, {
+        type: "bar",
+        data: chartData,
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+            },
+          },
+        },
+      });
+
+      // Save the chart instance in the ref
+      chartRef.current = newChart;
+    }
+  }, [chartData]);
+
   return (
     <div>
-      <h1>Nfield Logger</h1>
-      <div>
-        <ul>
-          {logData.map((log) => (
-            <li key={log.id}>{log.answer}</li>
-          ))}
-        </ul>
+      <h1>Responses</h1>
+      <div className="chart">
+        <canvas id="barChart" width="400" height="200"></canvas>
       </div>
     </div>
   );
